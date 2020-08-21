@@ -6,6 +6,8 @@
 #define FAKEMUDUO_THREAD_H
 
 #include "Atomic.h"
+#include "Types.h"
+
 #include <functional>
 #include <zconf.h>
 #include <sys/syscall.h>

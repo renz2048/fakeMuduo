@@ -8,6 +8,7 @@
 
 #include <unistd.h>
 #include <sys/syscall.h>
+#include <sys/prctl.h>
 
 namespace fakeMuduo
 {
@@ -68,6 +69,16 @@ namespace fakeMuduo
 
             void runInThread()
             {
+                fakeMuduo::CurrentThread::t_threadName = name_.empty() ? "fakeMuduoThread" : name_.c_str();
+                /*
+                 * #include <sys/prctl.h>
+                 * int prctl(int option, unsigned long arg2, unsinged long arg3, unsigned long arg4, unsigned long arg5);
+                 * PR_SET_NAME：设置进程名
+                 */
+                ::prctl(PR_SET_NAME, fakeMuduo::CurrentThread::t_threadName);
+
+                func_();
+                fakeMuduo::CurrentThread::t_threadName = "finished";
             }
         };
 
@@ -132,7 +143,21 @@ namespace fakeMuduo
     }
 
     void Thread::start() {
+        assert(!started_);
+        started_ = true;
         detail::ThreadData* data = new detail::ThreadData(func_, name_, &tid_);
-        pthread_create(&pthreadId_, NULL,NULL,data);
+        if (pthread_create(&pthreadId_, NULL, &detail::startThread, data)) {
+            started_ = false;
+            delete data;
+        } else {
+            assert(tid_ > 0);
+        }
+    }
+
+    int Thread::join() {
+        assert(started_);
+        assert(!joined_);
+        joined_ = true;
+        return pthread_join(pthreadId_, NULL);
     }
 }

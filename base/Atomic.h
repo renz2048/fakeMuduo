@@ -21,6 +21,10 @@ namespace fakeMuduo {
             }
 
             T getAndAdd(T x) {
+                /*
+                 * type __sync_fetch_and_add(type *ptr, type value, ...)：原子加
+                 * 将 value 加到 *ptr 上，结果更新到 *ptr，并返回 add 之前的值
+                 */
                 return __sync_fetch_and_add(&value_, x);
             }
 
