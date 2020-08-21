@@ -69,6 +69,9 @@ namespace fakeMuduo
 
             void runInThread()
             {
+                *tid_ = fakeMuduo::CurrentThread::tid();
+                tid_ = NULL;
+
                 fakeMuduo::CurrentThread::t_threadName = name_.empty() ? "fakeMuduoThread" : name_.c_str();
                 /*
                  * #include <sys/prctl.h>
@@ -122,6 +125,8 @@ namespace fakeMuduo
         ::nanosleep(&ts, NULL);
     }
 
+    AtomicInt32 Thread::numCreated_;
+
     Thread::Thread(ThreadFunc func, const string &n)
       : started_(false),
         joined_(false),
@@ -131,6 +136,14 @@ namespace fakeMuduo
         name_(n)
     {
         setDefaultName();
+    }
+
+    Thread::~Thread()
+    {
+        if (started_ && !joined_)
+        {
+            pthread_detach(pthreadId_);
+        }
     }
 
     void Thread::setDefaultName() {
@@ -143,13 +156,28 @@ namespace fakeMuduo
     }
 
     void Thread::start() {
-        assert(!started_);
+        assert(!started_); // started_ 变量必须为 false
         started_ = true;
         detail::ThreadData* data = new detail::ThreadData(func_, name_, &tid_);
+        /*
+         * 创建新线程
+         * #include <pthread.h>
+         * int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+         *                      void *(*start_routine) (void *), void *arg);
+         * compile and link with -pthread
+         * - thread：线程 ID
+         * - attr：设置线程属性
+         * - start_routine：新线程从 start_routine 函数开始执行
+         * - arg：传递给 start_routine 的参数
+         * 成功返回0。
+         */
+        printf("Thread::start : (before pthread_create) tid_=%d\n", tid_);
+        printf("Thread::start : data->tid_=%d\n", data->tid_);
         if (pthread_create(&pthreadId_, NULL, &detail::startThread, data)) {
             started_ = false;
             delete data;
         } else {
+            printf("Thread::start : (after pthread_create) tid_=%d\n", tid_);
             assert(tid_ > 0);
         }
     }

@@ -17,6 +17,11 @@ namespace fakeMuduo {
     class Thread {
     public:
         typedef std::function<void ()> ThreadFunc;
+        /**
+         * Thread 类构造函数，设置线程运行函数和线程名称，即 func_ 变量和 name_ 变量
+         * @param ThreadFunc 线程运行函数地址
+         * @param name
+         */
         explicit Thread(ThreadFunc, const string& name = string());
         ~Thread();
 
